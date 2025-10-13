@@ -1,0 +1,4 @@
+(executable
+ (public_name go)
+ (name main)
+ (libraries go))
