@@ -8,13 +8,15 @@ type token =
   | Float
   | Imaginary
   | Char
-  | String (* Literal end *)
+  | String
+  (* Literal end *)
   (* Operator begin *)
   | Add
   | Sub
   | Mul
   | Quo
   | Rem
+  (* Operator end *)
   (* Keyword begin *)
   | Break
   | Case
@@ -23,7 +25,6 @@ type token =
   | Continue
 (* Keyword end *)
 
-(* Operator end *)
 (* TODO *)
 
 (* TODO *)
@@ -51,7 +52,13 @@ let tokens = function
   | Const -> "const"
   | Continue -> "continue"
 
-module P = struct
+module P : sig
+  val is_literal : token -> bool
+  val is_operator : token -> bool
+  val is_keyword : token -> bool
+  val is_exported : string -> bool
+  (* val is_identifier : string -> bool *)
+end = struct
   let is_literal = function
     | Ident | Int | Float | Imaginary | Char | String -> true
     | _ -> false
@@ -66,4 +73,8 @@ module P = struct
   (* TODO: 5.4 Ascii.is_upper *)
   let is_upper = function 'A' .. 'Z' -> true | _ -> false
   let is_exported s = String.length s > 0 && is_upper s.[0]
+
+  (* let is_identifier s =
+    if s = "" || is_keyword s then false
+    else let c in String.iter s *)
 end
