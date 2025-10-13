@@ -78,3 +78,13 @@ end = struct
     if s = "" || is_keyword s then false
     else let c in String.iter s *)
 end
+
+type position = { filename : string; offset : int; line : int; column : int }
+
+module Position : sig
+  val is_valid : position -> bool
+  val string : position -> string
+end = struct
+  let is_valid p = p.line > 0
+  let string p = if is_valid p then "TODO" else "TODO"
+end
