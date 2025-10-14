@@ -24,11 +24,53 @@ type token =
   | Const
   | Continue
 (* Keyword end *)
-
 (* TODO *)
 
+module Tokens : sig
+  type t = token
+
+  val compare : token -> token -> int
+end = struct
+  type t = token
+
+  let compare = compare
+end
+
+module TokensMap = Map.Make (Tokens)
+
+(* Somebody un-stupid this for me *)
+
+let tokens = TokensMap.of_seq @@ List.to_seq [
+    (Illegal, (0, "ILLEGAL"));
+    (Eof, (1, "EOF"));
+    (Comment, (2, "COMMENT"));
+    (* Literal begin *)
+    (Ident, (4, "IDENT"));
+    (Int, (5, "INT"));
+    (Float, (6, "FLOAT"));
+    (Imaginary, (7, "IMAG"));
+    (Char, (8, "CHAR"));
+    (String, (9, "STRING"));
+    (* Literal end *)
+    (* Operator begin *)
+    (Add, (12, "+"));
+    (Sub, (13, "-"));
+    (Mul, (14, "*"));
+    (Quo, (15, "/"));
+    (Rem, (16, "%"));
+    (* Operator end *)
+    (* Keyword begin *)
+    (Break, (19, "break"));
+    (Case, (20, "case"));
+    (Chan, (21, "chan"));
+    (Const, (22, "const"));
+    (Continue, (23, "continue"));
+    (* Keyword end *)
+    (* TODO *)
+  ]
+
 (* TODO *)
-let tokens = function
+(* let tokens = function
   | Illegal -> "ILLEGAL"
   | Eof -> "EOF"
   | Comment -> "COMMENT"
@@ -50,7 +92,7 @@ let tokens = function
   | Case -> "case"
   | Chan -> "chan"
   | Const -> "const"
-  | Continue -> "continue"
+  | Continue -> "continue" *)
 
 module P : sig
   val is_literal : token -> bool
