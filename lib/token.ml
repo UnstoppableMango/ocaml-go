@@ -1,29 +1,40 @@
-type token =
-  | Illegal
-  | Eof
-  | Comment
-  (* Literal begin *)
-  | Ident
-  | Int
-  | Float
-  | Imaginary
-  | Char
-  | String
-  (* Literal end *)
-  (* Operator begin *)
-  | Add
-  | Sub
-  | Mul
-  | Quo
-  | Rem
-  (* Operator end *)
-  (* Keyword begin *)
-  | Break
-  | Case
-  | Chan
-  | Const
-  | Continue
-(* Keyword end *)
+type pos = int
+
+let no_pos : pos = 0
+
+module Pos : sig
+  val is_valid : pos -> bool
+end = struct
+  let is_valid = ( <> ) no_pos
+end
+
+type token = int
+
+let illegal : token = 0
+let eof : token = 1
+let comment : token = 2
+let literal_begin : token = 3
+let ident : token = 4
+let int : token = 5
+let float : token = 6
+let imag : token = 7
+let char : token = 8
+let string : token = 9
+let literal_end : token = 10
+let operator_begin : token = 11
+let add : token = 12
+let sub : token = 13
+let mul : token = 14
+let quo : token = 15
+let rem : token = 16
+let operator_end : token = 17
+let keyword_begin : token = 18
+let break : token = 19
+let case : token = 20
+let chan : token = 21
+let const : token = 22
+let continue : token = 23
+let keyword_end : token = 24
 (* TODO *)
 
 module Tokens : sig
@@ -36,38 +47,35 @@ end = struct
   let compare = compare
 end
 
-module TokensMap = Map.Make (Tokens)
+(* Somebody help me un-stupid this *)
 
-(* Somebody un-stupid this for me *)
+module IntMap = Map.Make (Int)
 
-let tokens = TokensMap.of_seq @@ List.to_seq [
-    (Illegal, (0, "ILLEGAL"));
-    (Eof, (1, "EOF"));
-    (Comment, (2, "COMMENT"));
-    (* Literal begin *)
-    (Ident, (4, "IDENT"));
-    (Int, (5, "INT"));
-    (Float, (6, "FLOAT"));
-    (Imaginary, (7, "IMAG"));
-    (Char, (8, "CHAR"));
-    (String, (9, "STRING"));
-    (* Literal end *)
-    (* Operator begin *)
-    (Add, (12, "+"));
-    (Sub, (13, "-"));
-    (Mul, (14, "*"));
-    (Quo, (15, "/"));
-    (Rem, (16, "%"));
-    (* Operator end *)
-    (* Keyword begin *)
-    (Break, (19, "break"));
-    (Case, (20, "case"));
-    (Chan, (21, "chan"));
-    (Const, (22, "const"));
-    (Continue, (23, "continue"));
-    (* Keyword end *)
-    (* TODO *)
-  ]
+let tokens =
+  IntMap.of_list
+    [
+      (illegal, "ILLEGAL");
+      (eof, "EOF");
+      (comment, "COMMENT");
+      (ident, "IDENT");
+      (int, "INT");
+      (float, "FLOAT");
+      (imag, "IMAG");
+      (char, "CHAR");
+      (string, "STRING");
+      (add, "+");
+      (sub, "-");
+      (mul, "*");
+      (quo, "/");
+      (rem, "%");
+      (break, "break");
+      (case, "case");
+      (chan, "chan");
+      (const, "const");
+      (continue, "continue");
+    ]
+
+let name t = tokens |> IntMap.find_opt t |> Option.value ~default:"ILLEGAL"
 
 (* TODO *)
 (* let tokens = function
@@ -102,7 +110,7 @@ module P : sig
   (* val is_identifier : string -> bool *)
 end = struct
   let is_literal = function
-    | Ident | Int | Float | Imaginary | Char | String -> true
+    | literal_begin .. literal_end -> true
     | _ -> false
 
   let is_operator = function Add | Sub | Mul | Quo | Rem -> true | _ -> false
@@ -130,3 +138,6 @@ end = struct
   let is_valid p = p.line > 0
   let string p = if is_valid p then "TODO" else "TODO"
 end
+
+type file = { name : string; base : int; size : int; lines : int array }
+type line_info = { offset : int; filename : string; line : int; column : int }

@@ -1,2 +1,3 @@
 (library
- (name go))
+ (name go)
+ (libraries angstrom))
