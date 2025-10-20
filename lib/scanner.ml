@@ -1,9 +1,9 @@
 open Token
 
-type mode = int
+type mode = Mode of int
 
-let scan_comments : mode = 1
-let dont_insert_semis : mode = 2
+let scan_comments = Mode 1
+let dont_insert_semis = Mode 2
 
 type scanner = {
   file : file;
@@ -24,7 +24,7 @@ let empty =
     file = { lines = []; size = 0; base = 0; name = "" };
     dir = "";
     src = Bytes.empty;
-    mode = 0;
+    mode = scan_comments; (* TODO: Is this correct? *)
     ch = ' ';
     offset = 0;
     rdOffset = 0;
