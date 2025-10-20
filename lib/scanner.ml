@@ -15,14 +15,39 @@ type scanner = {
   rdOffset : int;
   lineOffset : int;
   insertSemi : bool;
-  nlPos : int;
+  nlPos : pos;
   errorCount : int;
 }
 
-let next p = p
-
-let init f src mode =
+let empty =
   {
+    file = { lines = []; size = 0; base = 0; name = "" };
+    dir = "";
+    src = Bytes.empty;
+    mode = 0;
+    ch = ' ';
+    offset = 0;
+    rdOffset = 0;
+    lineOffset = 0;
+    insertSemi = false;
+    nlPos = no_pos;
+    errorCount = 0;
+  }
+
+let next s =
+  if s.rdOffset < Bytes.length s.src then s
+  else
+    {
+      s with
+      offset = Bytes.length s.src;
+      lineOffset = (if s.ch = '\n' then s.offset else s.lineOffset);
+      file = (if s.ch = '\n' then File.add_line s.file s.offset else s.file);
+      ch = Char.chr 0;
+    }
+
+let init s f src mode =
+  {
+    s with
     file = f;
     dir = Filename.dirname f.name;
     src;
@@ -32,9 +57,10 @@ let init f src mode =
     rdOffset = 0;
     lineOffset = 0;
     insertSemi = false;
-    nlPos = 0;
     errorCount = 0;
   }
+
+(* Meh *)
 
 type state = {
   ch : char;
