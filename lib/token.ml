@@ -139,5 +139,30 @@ end = struct
   let string p = if is_valid p then "TODO" else "TODO"
 end
 
-type file = { name : string; base : int; size : int; lines : int array }
-type line_info = { offset : int; filename : string; line : int; column : int }
+type lineinfo = { offset : int; filename : string; line : int; column : int }
+type file = { name : string; base : int; size : int; lines : int list }
+
+module File : sig
+  val name : file -> string
+  val base : file -> int
+  val size : file -> int
+  val line_count : file -> int
+  val add_line : file -> int -> file
+  val pos : file -> int -> int
+  val offset : file -> int -> int
+end = struct
+  let name f = f.name
+  let base f = f.base
+  let size f = f.size
+  let line_count f = f.lines |> List.length
+
+  let add_line f o =
+    let i = f |> line_count in
+    let ix = List.nth f.lines i - 1 in
+    if (i = 0 || ix < o) && o < f.size then { f with lines = o :: f.lines }
+    else f
+
+  let fix_offset f o = if o < 0 then 0 else if o > f.size then f.size else o
+  let pos f o = fix_offset f o + 1
+  let offset f p = fix_offset f (p - f.base)
+end
