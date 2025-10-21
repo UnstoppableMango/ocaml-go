@@ -1,6 +1,6 @@
-type pos = int
+type pos = Pos of int
 
-let no_pos : pos = 0
+let no_pos = Pos 0
 
 module Pos : sig
   val is_valid : pos -> bool
@@ -8,33 +8,33 @@ end = struct
   let is_valid = ( <> ) no_pos
 end
 
-type token = int
+type token = Token of int
 
-let illegal : token = 0
-let eof : token = 1
-let comment : token = 2
-let literal_begin : token = 3
-let ident : token = 4
-let int : token = 5
-let float : token = 6
-let imag : token = 7
-let char : token = 8
-let string : token = 9
-let literal_end : token = 10
-let operator_begin : token = 11
-let add : token = 12
-let sub : token = 13
-let mul : token = 14
-let quo : token = 15
-let rem : token = 16
-let operator_end : token = 17
-let keyword_begin : token = 18
-let break : token = 19
-let case : token = 20
-let chan : token = 21
-let const : token = 22
-let continue : token = 23
-let keyword_end : token = 24
+let illegal = Token 0
+let eof = Token 1
+let comment = Token 2
+let literal_begin = Token 3
+let ident = Token 4
+let int = Token 5
+let float = Token 6
+let imag = Token 7
+let char = Token 8
+let string = Token 9
+let literal_end = Token 10
+let operator_begin = Token 11
+let add = Token 12
+let sub = Token 13
+let mul = Token 14
+let quo = Token 15
+let rem = Token 16
+let operator_end = Token 17
+let keyword_begin = Token 18
+let break = Token 19
+let case = Token 20
+let chan = Token 21
+let const = Token 22
+let continue = Token 23
+let keyword_end = Token 24
 (* TODO *)
 
 module Tokens : sig
@@ -49,10 +49,10 @@ end
 
 (* Somebody help me un-stupid this *)
 
-module IntMap = Map.Make (Int)
+module TokenMap = Map.Make (Tokens)
 
 let tokens =
-  IntMap.of_list
+  TokenMap.of_list
     [
       (illegal, "ILLEGAL");
       (eof, "EOF");
@@ -75,7 +75,7 @@ let tokens =
       (continue, "continue");
     ]
 
-let name t = tokens |> IntMap.find_opt t |> Option.value ~default:"ILLEGAL"
+let name t = tokens |> TokenMap.find_opt t |> Option.value ~default:"ILLEGAL"
 
 module P : sig
   val is_literal : token -> bool

@@ -24,7 +24,8 @@ let empty =
     file = { lines = []; size = 0; base = 0; name = "" };
     dir = "";
     src = Bytes.empty;
-    mode = scan_comments; (* TODO: Is this correct? *)
+    (* TODO: Is this correct? *)
+    mode = scan_comments;
     ch = ' ';
     offset = 0;
     rdOffset = 0;
@@ -34,8 +35,18 @@ let empty =
     errorCount = 0;
   }
 
+let error s = { s with errorCount = s.errorCount + 1 }
+
 let next s =
-  if s.rdOffset < Bytes.length s.src then s
+  let r = Bytes.get s.src s.rdOffset in
+  if s.rdOffset < Bytes.length s.src then
+    {
+      s with
+      offset = s.rdOffset;
+      lineOffset = (if s.ch = '\n' then s.offset else s.lineOffset);
+      file = (if s.ch = '\n' then File.add_line s.file s.offset else s.file);
+      ch = r;
+    }
   else
     {
       s with
