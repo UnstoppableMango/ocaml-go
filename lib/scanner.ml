@@ -41,21 +41,24 @@ let empty =
   }
 
 let error s o msg =
+  let () =
+    let p = File.position s.file o in
+    match s.err with Some err -> err p msg | _ -> ()
+  in
+
   { s with errorCount = s.errorCount + 1 }
 
-  let () =
-    match s.err with
-    | Some err -> err o msg
-    | _ -> ()
-
 let next s =
+  let s =
+    if s.ch == '\n' then
+      let file = File.add_line s.file s.offset in
+      { s with lineOffset = s.offset; file }
+    else s
+  in
   let l = Bytes.length s.src in
-  let lineOffset = s.offset in
-  let file = File.add_line s.file s.offset in
-  let s = if s.ch == '\n' then { s with lineOffset; file } else s in
   if s.rdOffset < l then
     match Bytes.get s.src s.rdOffset with
-    | '\x00' -> error s
+    | '\x00' -> error s (Pos s.offset) "illegal character NUL"
     | r when r >= '\x80' -> { s with offset = s.rdOffset }
     | _ -> { s with offset = s.rdOffset }
   else { s with offset = l; ch = '\x00' }
