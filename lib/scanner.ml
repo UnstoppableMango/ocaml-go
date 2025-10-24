@@ -1,14 +1,18 @@
-open Token
+open Filename
+open Position
 
 type mode = Mode of int
 
 let scan_comments = Mode 1
 let dont_insert_semis = Mode 2
 
+type error_handler = position -> string -> unit
+
 type scanner = {
   file : file;
   dir : string;
   src : bytes;
+  err : error_handler option;
   mode : mode;
   ch : char;
   offset : int;
@@ -24,6 +28,7 @@ let empty =
     file = { lines = []; size = 0; base = 0; name = "" };
     dir = "";
     src = Bytes.empty;
+    err = None;
     (* TODO: Is this correct? *)
     mode = scan_comments;
     ch = ' ';
@@ -35,32 +40,31 @@ let empty =
     errorCount = 0;
   }
 
-let error s = { s with errorCount = s.errorCount + 1 }
+let error s o msg =
+  { s with errorCount = s.errorCount + 1 }
+
+  let () =
+    match s.err with
+    | Some err -> err o msg
+    | _ -> ()
 
 let next s =
-  let r = Bytes.get s.src s.rdOffset in
-  if s.rdOffset < Bytes.length s.src then
-    {
-      s with
-      offset = s.rdOffset;
-      lineOffset = (if s.ch = '\n' then s.offset else s.lineOffset);
-      file = (if s.ch = '\n' then File.add_line s.file s.offset else s.file);
-      ch = r;
-    }
-  else
-    {
-      s with
-      offset = Bytes.length s.src;
-      lineOffset = (if s.ch = '\n' then s.offset else s.lineOffset);
-      file = (if s.ch = '\n' then File.add_line s.file s.offset else s.file);
-      ch = Char.chr 0;
-    }
+  let l = Bytes.length s.src in
+  let lineOffset = s.offset in
+  let file = File.add_line s.file s.offset in
+  let s = if s.ch == '\n' then { s with lineOffset; file } else s in
+  if s.rdOffset < l then
+    match Bytes.get s.src s.rdOffset with
+    | '\x00' -> error s
+    | r when r >= '\x80' -> { s with offset = s.rdOffset }
+    | _ -> { s with offset = s.rdOffset }
+  else { s with offset = l; ch = '\x00' }
 
 let init s f src mode =
   {
     s with
     file = f;
-    dir = Filename.dirname f.name;
+    dir = dirname f.name;
     src;
     mode;
     ch = ' ';
@@ -79,7 +83,7 @@ type state = {
   rd_offset : int;
   line_offset : int;
   insert_semi : bool;
-  nl_pos : Token.pos;
+  nl_pos : pos;
 }
 
 open Angstrom
