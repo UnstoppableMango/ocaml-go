@@ -48,6 +48,10 @@ let error s o msg =
 
   { s with errorCount = s.errorCount + 1 }
 
+let decode_rune src =
+  let c = Bytes.get_utf_8_uchar src 0 in
+  (Uchar.utf_decode_uchar c, Uchar.utf_decode_length c)
+
 let next s =
   let s =
     if s.ch == '\n' then
@@ -59,7 +63,9 @@ let next s =
   if s.rdOffset < l then
     match Bytes.get s.src s.rdOffset with
     | '\x00' -> error s (Pos s.offset) "illegal character NUL"
-    | r when r >= '\x80' -> { s with offset = s.rdOffset }
+    | r when r >= '\x80' ->
+        let r, w = Bytes.sub s.src s.rdOffset (l - 1) |> decode_rune in
+        { s with offset = s.rdOffset }
     | _ -> { s with offset = s.rdOffset }
   else { s with offset = l; ch = '\x00' }
 
