@@ -4,6 +4,9 @@ OPAM ?= opam
 build:
 	$(DUNE) build
 
+bin/main.bc:
+	cd $(@D) && $(DUNE) build $(@F)
+
 format fmt:
 	$(DUNE) fmt
 

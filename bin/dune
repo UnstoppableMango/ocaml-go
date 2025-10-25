@@ -1,4 +1,5 @@
 (executable
  (public_name go)
  (name main)
- (libraries go))
+ (libraries go)
+ (modes byte exe))

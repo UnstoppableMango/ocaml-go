@@ -40,12 +40,11 @@ let empty =
     errorCount = 0;
   }
 
-let error s o msg =
-  let () =
-    let p = File.position s.file o in
-    match s.err with Some err -> err p msg | _ -> ()
-  in
+let handle_err { err; file; _ } offset msg =
+  match err with Some err -> err (File.position file offset) msg | _ -> ()
 
+let error s offset msg =
+  let () = handle_err s offset msg in
   { s with errorCount = s.errorCount + 1 }
 
 let decode_rune src =
@@ -53,27 +52,30 @@ let decode_rune src =
   (Uchar.utf_decode_uchar c, Uchar.utf_decode_length c)
 
 let next s =
-  let s =
-    if s.ch == '\n' then
-      let file = File.add_line s.file s.offset in
-      { s with lineOffset = s.offset; file }
-    else s
+  let add_line s =
+    let file = File.add_line s.file s.offset in
+    { s with file; lineOffset = s.offset }
   in
-  let l = Bytes.length s.src in
-  if s.rdOffset < l then
-    match Bytes.get s.src s.rdOffset with
+  let offset = s.rdOffset in
+  let s =
+    let s = { s with offset } in
+    if s.ch = '\n' then add_line s else s
+  in
+  if offset < Bytes.length s.src then
+    match Bytes.get s.src offset with
     | '\x00' -> error s (Pos s.offset) "illegal character NUL"
     | r when r >= '\x80' ->
-        let r, w = Bytes.sub s.src s.rdOffset (l - 1) |> decode_rune in
-        { s with offset = s.rdOffset }
-    | _ -> { s with offset = s.rdOffset }
-  else { s with offset = l; ch = '\x00' }
+        (* TODO: Not ASCII *)
+        (* let r, w = Bytes.sub s.src rdo (l - 1) |> decode_rune in *)
+        s
+    | r -> { s with rdOffset = offset + 1; ch = r }
+  else { s with ch = '\x00' }
 
-let init s f src mode =
+let init s file src mode =
   {
     s with
-    file = f;
-    dir = dirname f.name;
+    file;
+    dir = dirname file.name;
     src;
     mode;
     ch = ' ';
@@ -83,6 +85,27 @@ let init s f src mode =
     insertSemi = false;
     errorCount = 0;
   }
+
+let default file src = init empty file src scan_comments
+
+let string { dir; file = { name; _ }; ch; _ } =
+  Printf.sprintf "%s:%s:%c" dir name ch
+
+type error = { pos : position; msg : string }
+
+module Error : sig
+  val string : error -> string
+end = struct
+  let string { pos; msg } =
+    if pos.filename <> "" || is_valid pos then
+      let s = Position.string pos in
+      Printf.sprintf "%s: %s" s msg
+    else msg
+end
+
+type error_list = error list
+
+module ErrorList : sig end = struct end
 
 (* Meh *)
 
