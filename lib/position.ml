@@ -20,8 +20,10 @@ type pos = Pos of int
 let no_pos = Pos 0
 
 module Pos : sig
+  val add : pos -> int -> pos
   val is_valid : pos -> bool
 end = struct
+  let add (Pos p) a = Pos (p + a)
   let is_valid = ( <> ) no_pos
 end
 
