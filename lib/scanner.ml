@@ -107,6 +107,21 @@ type error_list = error list
 
 module ErrorList : sig end = struct end
 
+let skip_whitespace s =
+  match s.ch with
+  | ' ' | '\t' | '\r' -> next s
+  | '\n' when not s.insertSemi -> next s
+  | _ -> s
+
+let scan s =
+  if Pos.is_valid s.nlPos then
+    ({ s with nlPos = no_pos }, s.nlPos, Token.semicolon, "\n")
+  else
+    let s = skip_whitespace s in
+    let pos = File.pos s.file s.offset in
+    let insert_semi = false in
+    (s, no_pos, Token.illegal, "")
+
 (* Meh *)
 
 type state = {
